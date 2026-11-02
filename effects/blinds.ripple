@@ -1,0 +1,28 @@
+// Closes the actor like window blinds, slat by slat.
+// SPDX-License-Identifier: MIT
+
+const float SLAT = 28.0; // slat height in pixels
+
+vec4 effect(vec2 uv) {
+    vec2 res = max(_resolution, vec2(1.0));
+    float y = uv.y * res.y;
+    float row = floor(y / SLAT);
+    float local = y / SLAT - row - 0.5;
+
+    // Slats close from the top down
+    float rows = res.y / SLAT;
+    float t = clamp(_progress * 1.6 - row / max(rows, 1.0) * 0.6, 0.0, 1.0);
+    float angle = t * 1.5707963;
+    float height = cos(angle);
+    if (abs(local) > height * 0.5)
+        return vec4(0.0);
+
+    float sourceY = (row + 0.5 + local / max(height, 0.001)) * SLAT;
+    vec4 col = pixel(vec2(uv.x, sourceY / res.y));
+
+    // Turning slats catch less light, with a highlight on their edge
+    float edge = smoothstep(0.3, 0.5, abs(local) / max(height, 0.001));
+    col.rgb *= 1.0 - sin(angle) * 0.6;
+    col.rgb += col.a * edge * sin(angle) * 0.25;
+    return col;
+}

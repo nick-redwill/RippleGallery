@@ -1,0 +1,25 @@
+// Flips the actor away like a card turning on its side.
+// SPDX-License-Identifier: MIT
+
+const float PERSPECTIVE = 0.6;
+
+vec4 effect(vec2 uv) {
+    float p = _progress;
+    float angle = p * p * 1.5707963;
+    float sn = sin(angle);
+    float cs = cos(angle);
+
+    // Turn around the vertical axis: undo the perspective for this point
+    vec2 q = uv * 2.0 - 1.0;
+    float denom = cs - q.x * PERSPECTIVE * sn;
+    if (denom <= 0.0001)
+        return vec4(0.0);
+
+    float x = q.x / denom;
+    float depth = 1.0 + x * sn * PERSPECTIVE;
+    vec2 source = vec2(x, q.y * depth) * 0.5 + 0.5;
+
+    vec4 col = pixel(source);
+    col.rgb *= 1.0 - sn * 0.5;
+    return col * (1.0 - smoothstep(0.85, 1.0, p));
+}

@@ -1,0 +1,22 @@
+// Splits the actor into its colors, which drift apart and fade.
+// SPDX-License-Identifier: MIT
+
+vec4 effect(vec2 uv) {
+    vec2 res = max(_resolution, vec2(1.0));
+    float p = _progress;
+    float spread = p * p * 0.08;
+
+    // Each row drifts a little differently
+    float wave = sin(uv.y * 14.0 + _random * 6.2831 + p * 6.0) * p * 0.02;
+
+    // The actor slightly grows while it fades
+    vec2 c = (uv - 0.5) / (1.0 + p * 0.15) + 0.5;
+    vec2 aspect = vec2(1.0, res.x / res.y);
+
+    vec4 r = pixel(c + vec2(spread + wave, -spread * 0.5) / aspect);
+    vec4 g = pixel(c + vec2(-wave * 0.5, spread) / aspect);
+    vec4 b = pixel(c + vec2(-spread - wave, -spread * 0.5) / aspect);
+
+    vec4 col = vec4(r.r, g.g, b.b, max(max(r.a, g.a), b.a));
+    return col * (1.0 - smoothstep(0.4, 1.0, p));
+}

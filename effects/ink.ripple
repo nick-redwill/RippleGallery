@@ -1,0 +1,49 @@
+// Dissolves the actor like ink spreading through water, with a glowing edge.
+// SPDX-License-Identifier: MIT
+
+float hash(vec2 p) {
+    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+
+float noise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x),
+               mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
+}
+
+float fbm(vec2 p) {
+    float value = 0.0;
+    float amplitude = 0.5;
+    for (int i = 0; i < 5; i++) {
+        value += noise(p) * amplitude;
+        p *= 2.03;
+        amplitude *= 0.5;
+    }
+    return value;
+}
+
+vec4 effect(vec2 uv) {
+    // The ink stays within the actor, apart from the slight push below
+    if (uv.x < -0.05 || uv.x > 1.05 || uv.y < -0.05 || uv.y > 1.05)
+        return vec4(0.0);
+
+    vec2 res = max(_resolution, vec2(1.0));
+    vec2 p = uv * vec2(res.x / res.y, 1.0) * 3.0 + _random * 17.0;
+
+    // Warp the noise with itself for swirling, smoky shapes
+    vec2 warp = vec2(fbm(p + _progress * 1.5), fbm(p + 5.2 - _progress));
+    float n = fbm(p + warp * 1.8);
+
+    float t = _progress * 1.25 - 0.1;
+    float alpha = smoothstep(t, t + 0.05, n);
+    float edge = smoothstep(t - 0.06, t, n) - smoothstep(t, t + 0.05, n);
+
+    // The ink pushes the content a little as it passes
+    vec4 col = pixel(uv + (warp - 0.5) * 0.04 * smoothstep(0.0, 0.3, _progress));
+    vec3 ink = vec3(0.55, 0.3, 1.0);
+
+    col.rgb = mix(col.rgb, ink * col.a, edge * 0.9);
+    return col * max(alpha, edge * 0.8);
+}

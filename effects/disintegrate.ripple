@@ -1,0 +1,46 @@
+// Crumbles the actor into dust that drifts away, sweeping from left to right.
+// SPDX-License-Identifier: MIT
+
+const float GRAIN = 3.0; // particle size in pixels
+const float TRAVEL = 0.7; // how far particles drift, in actor heights
+const int STEPS = 28;
+
+float hash(vec2 p) {
+    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+
+vec4 effect(vec2 uv) {
+    vec2 res = max(_resolution, vec2(1.0));
+    float aspect = res.x / res.y;
+    vec2 dir = normalize(vec2(1.0, -0.55));
+
+    // Work in actor heights so particles keep their shape
+    vec2 p = vec2(uv.x * aspect, uv.y);
+
+    // Particles only drift up and right, nothing can reach other areas
+    if (uv.x < 0.0 || uv.y > 1.0 || uv.y < -TRAVEL || p.x > aspect + TRAVEL)
+        return vec4(0.0);
+
+    // Look back along the drift direction for a particle that ends up here
+    for (int i = 0; i < STEPS; i++) {
+        float dist = float(i) / float(STEPS) * TRAVEL;
+        vec2 q = p - dir * dist;
+        vec2 quv = vec2(q.x / aspect, q.y);
+
+        vec2 cell = floor(quv * res / GRAIN);
+        float h = hash(cell + _random * 13.0);
+        float delay = quv.x * 0.55 + h * 0.3;
+        float t = clamp((_progress * 1.7 - delay) / 0.8, 0.0, 1.0);
+
+        float travel = t * t * TRAVEL * (0.6 + 0.8 * h);
+        if (abs(travel - dist) <= 0.5 * TRAVEL / float(STEPS)) {
+            vec4 col = pixel(quv);
+            float fade = 1.0 - smoothstep(0.4, 1.0, t);
+            // Particles heat up slightly as they leave
+            col.rgb = mix(col.rgb, col.a * vec3(1.0, 0.75, 0.45), smoothstep(0.0, 0.5, t) * 0.35);
+            return col * fade;
+        }
+    }
+
+    return vec4(0.0);
+}

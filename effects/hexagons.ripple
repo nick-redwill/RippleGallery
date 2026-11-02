@@ -1,0 +1,48 @@
+// Breaks the actor into hexagons that spin away, starting at the pointer.
+// SPDX-License-Identifier: MIT
+
+const float SIZE = 9.0; // hexagons per actor height
+
+float hexDistance(vec2 p) {
+    p = abs(p);
+    return max(dot(p, vec2(0.5, 0.8660254)), p.x);
+}
+
+vec4 effect(vec2 uv) {
+    vec2 res = max(_resolution, vec2(1.0));
+    vec2 scale = vec2(res.x / res.y, 1.0);
+    vec2 p = uv * scale * SIZE;
+
+    // Nearest hexagon center, of two offset grids
+    vec2 s = vec2(1.0, 1.7320508);
+    vec2 a = mod(p, s) - s * 0.5;
+    vec2 b = mod(p - s * 0.5, s) - s * 0.5;
+    vec2 local = dot(a, a) < dot(b, b) ? a : b;
+    vec2 center = p - local;
+
+    // Hexagons near the pointer go first
+    vec2 mouse = _mouseUV * scale;
+    float far = length(max(abs(mouse), abs(scale - mouse)));
+    float delay = distance(center / SIZE, mouse) / max(far, 0.001);
+    float t = clamp(_progress * 1.8 - delay * 0.8, 0.0, 1.0);
+    t = t * t;
+    if (t <= 0.0)
+        return pixel(uv);
+
+    float size = 1.0 - t;
+    if (size <= 0.001)
+        return vec4(0.0);
+
+    float angle = t * 2.0;
+    float sn = sin(angle);
+    float cs = cos(angle);
+    vec2 q = vec2(local.x * cs - local.y * sn, local.x * sn + local.y * cs) / size;
+
+    // A bit larger than the cell, so that no gaps show between hexagons
+    if (hexDistance(q) > 0.505)
+        return vec4(0.0);
+
+    vec4 col = pixel((center + q) / SIZE / scale);
+    col.rgb += col.a * t * 0.3;
+    return col * (1.0 - t * 0.4);
+}

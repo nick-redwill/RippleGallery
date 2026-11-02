@@ -1,0 +1,77 @@
+// Cracks the actor into glass shards that spin and fall away.
+// SPDX-License-Identifier: MIT
+
+const int ROWS = 6;              // shards per actor height
+
+float hash(vec2 p) {
+    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+
+mat2 rotate(float a) {
+    float s = sin(a);
+    float c = cos(a);
+    return mat2(c, -s, s, c);
+}
+
+vec4 effect(vec2 uv) {
+    vec2 res = max(_resolution, vec2(1.0));
+    float aspect = res.x / res.y;
+    float size = 1.0 / float(ROWS);
+    vec2 p = vec2(uv.x * aspect, uv.y);
+
+    // Shards drift a little sideways and fall, nothing reaches other areas
+    if (uv.y < 0.0 || uv.y > 2.6 || p.x < -0.5 || p.x > aspect + 0.5)
+        return vec4(0.0);
+
+    // Shards fall, so the one drawn here came from above or slightly aside
+    float column = floor(p.x / size);
+    vec4 result = vec4(0.0);
+
+    for (int ix = -1; ix <= 1; ix++) {
+        for (int iy = 0; iy < ROWS; iy++) {
+            for (int it = 0; it < 2; it++) {
+                float row = float(iy);
+                float tri = float(it);
+                vec2 cell = vec2(column + float(ix), row);
+                vec2 id = cell * 2.0 + vec2(tri, 0.0) + _random * 7.0;
+                float r1 = hash(id);
+                float r2 = hash(id + 1.7);
+                float r3 = hash(id + 3.1);
+
+                // Lower shards break first, the rest follow
+                float delay = (1.0 - row / float(ROWS)) * 0.35 + r1 * 0.25;
+                float t = clamp((_progress * 1.6 - delay) / 0.9, 0.0, 1.0);
+
+                vec2 corner = cell * size;
+                vec2 center = corner + size * (tri < 0.5 ? vec2(0.33, 0.67) : vec2(0.67, 0.33));
+                vec2 offset = vec2((r2 - 0.5) * 0.6 * t, t * t * 1.4 - t * 0.15);
+                float angle = (r3 - 0.5) * 7.0 * t;
+
+                // Undo the shard's motion to find where p sat before it broke
+                vec2 q = rotate(-angle) * (p - center - offset) + center;
+                vec2 local = (q - corner) / size;
+
+                bool inCell = local.x >= 0.0 && local.x <= 1.0
+                    && local.y >= 0.0 && local.y <= 1.0;
+                bool upper = local.x > local.y;
+                if (!inCell || upper == (tri < 0.5))
+                    continue;
+
+                vec4 col = pixel(vec2(q.x / aspect, q.y));
+                if (col.a <= 0.0)
+                    continue;
+
+                // Bright glassy edges once the shard is free
+                float edge = min(min(local.x, local.y), min(1.0 - max(local.x, local.y), abs(local.x - local.y)));
+                float shine = (1.0 - smoothstep(0.0, 0.04, edge)) * smoothstep(0.0, 0.15, t);
+                col.rgb = mix(col.rgb, vec3(col.a), shine * 0.6);
+
+                col *= 1.0 - smoothstep(0.55, 1.0, t);
+                if (col.a > result.a)
+                    result = col;
+            }
+        }
+    }
+
+    return result;
+}

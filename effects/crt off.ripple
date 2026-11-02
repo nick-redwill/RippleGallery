@@ -1,0 +1,32 @@
+// Switches the actor off like an old CRT television.
+// SPDX-License-Identifier: MIT
+
+vec4 effect(vec2 uv) {
+    vec2 res = max(_resolution, vec2(1.0));
+    float p = _progress;
+
+    // First the picture collapses into a bright line, then the line into a dot
+    float squash = smoothstep(0.0, 0.45, p);
+    float shrink = smoothstep(0.4, 0.85, p);
+    float fade = 1.0 - smoothstep(0.85, 1.0, p);
+
+    vec2 size = vec2(mix(res.x, 0.0, shrink), mix(res.y, 2.0, squash));
+    vec2 d = (uv - 0.5) * res;
+
+    // A glow around the line, also outside the actor
+    float glow = exp(-abs(d.y) / 6.0)
+        * (1.0 - smoothstep(0.0, 8.0, abs(d.x) - size.x * 0.5))
+        * squash * fade * 0.6;
+
+    if (abs(d.x) > size.x * 0.5 || abs(d.y) > size.y * 0.5)
+        return vec4(glow);
+
+    vec2 source = 0.5 + d / max(size, vec2(1.0));
+    vec4 col = pixel(clamp(source, 0.0, 1.0));
+
+    // Scanlines, and the picture burns brighter as it collapses
+    col.rgb *= 0.9 + 0.1 * sin(uv.y * res.y * 3.14159);
+    col.rgb = mix(col.rgb, vec3(col.a), squash * 0.85);
+
+    return max(col, vec4(glow)) * fade;
+}
