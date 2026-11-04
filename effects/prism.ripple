@@ -1,5 +1,6 @@
 // Splits the actor into its colors, which drift apart and fade.
 // SPDX-License-Identifier: MIT
+//@padding 20
 
 vec4 effect(vec2 uv) {
     vec2 res = max(_resolution, vec2(1.0));

@@ -1,5 +1,6 @@
 // Dissolves the actor like ink spreading through water, with a glowing edge.
 // SPDX-License-Identifier: MIT
+//@padding 5
 
 float hash(vec2 p) {
     return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);

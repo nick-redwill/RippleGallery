@@ -1,5 +1,6 @@
 // Cracks the actor into glass shards that spin and fall away.
 // SPDX-License-Identifier: MIT
+//@padding 3 3 120 3
 
 const int ROWS = 6;              // shards per actor height
 

@@ -1,5 +1,6 @@
 // Crumbles the actor into dust that drifts away, sweeping from left to right.
 // SPDX-License-Identifier: MIT
+//@padding 40 70 0 0
 
 const float GRAIN = 3.0; // particle size in pixels
 const float TRAVEL = 0.7; // how far particles drift, in actor heights

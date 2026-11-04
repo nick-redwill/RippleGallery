@@ -1,5 +1,7 @@
 // Pulls the actor into a spinning black hole that opens at the pointer.
 // SPDX-License-Identifier: MIT
+// Reaaally big padding value to cover the whole screen
+//@padding 10000d
 
 vec4 effect(vec2 uv) {
     vec2 res = max(_resolution, vec2(1.0));

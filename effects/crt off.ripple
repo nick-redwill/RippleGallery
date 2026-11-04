@@ -1,5 +1,6 @@
 // Switches the actor off like an old CRT television.
 // SPDX-License-Identifier: MIT
+//@padding 3
 
 vec4 effect(vec2 uv) {
     vec2 res = max(_resolution, vec2(1.0));

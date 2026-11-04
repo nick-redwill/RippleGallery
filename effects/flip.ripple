@@ -1,5 +1,6 @@
 // Flips the actor away like a card turning on its side.
 // SPDX-License-Identifier: MIT
+//@padding 60 15
 
 const float PERSPECTIVE = 0.6;
 
