@@ -18,11 +18,12 @@ Thanks for sharing an effect! This guide covers what a submission needs, so it c
 
 **Header**
 
-Start the file with a one-line description and the license:
+Start the file with a one-line description and the license, then the padding if the effect draws outside the actor (see [`//@padding`](README.md#things-to-know) in the README):
 
 ```glsl
 // Cracks the actor into glass shards that spin and fall away.
 // SPDX-License-Identifier: MIT
+//@padding 20 50 120 50
 ```
 
 **Code**
@@ -31,6 +32,7 @@ Start the file with a one-line description and the license:
 - Portable GLSL: `int` loop counters with constant limits, no reserved words such as `half`, no `pow()` with negative bases.
 - No external files or textures.
 - Reasonably fast. Return early for pixels the effect can't reach, and keep loops short.
+- The smallest `//@padding` the effect needs, or none if it stays inside the actor.
 
 ## Testing
 
